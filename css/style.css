@@ -1,0 +1,150 @@
+
+
+
+:root {
+    --cellSize: 60px;
+    --cellBorderSize: 2px;
+}
+
+:root[theme="light"] {
+    --bodyColor: white;
+    
+    --headerBackground: #eee;
+    --headerBorder: 1px solid #bbb;
+}
+
+:root[theme="dark"] {
+    --bodyColor: #111;
+    
+    --headerBackground: #111;
+    --headerBorder: 1px solid #333;
+}
+
+
+
+
+
+
+.icon {
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+
+.title {
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    cursor: default;
+    font-weight: 600;
+}
+
+
+.hoverSwap {
+    display: grid;
+}
+.hoverSwap > * {
+    grid-column: 1;
+    grid-row: 1;
+    transition: opacity 0.2s;
+}
+.hoverSwap > *:last-child {
+    opacity: 0;
+}
+.hoverSwap:hover > *:last-child {
+    opacity: 1;
+}
+.hoverSwap:hover > *:first-child {
+    opacity: 0;
+}
+
+
+.clickable {
+    cursor: pointer;
+}
+
+
+
+
+
+body {
+    margin: 0;
+    overflow: hidden visible;
+    background: var(--bodyColor);
+}
+
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    height: 50px;
+    font-size: 50px;
+
+    padding: 0 10px;
+    margin: 0;
+
+    background: var(--headerBackground);
+    color: white;
+    border: var(--headerBorder);
+}
+
+header svg {
+    height: 60%;
+}
+
+
+
+#game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+
+    height: calc(90vh);
+}
+
+
+#words-grid {
+
+}
+
+.words-row {
+    display: flex;
+}
+
+.words-cell {
+    margin: 2px;
+    width: var(--cellSize);
+    height: var(--cellSize);
+    
+    transform-style: preserve-3d;
+
+    text-transform: uppercase;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    color: white;
+    font-size: 45px;
+    font-weight: bolder;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.words-cell:not([data-state]) {
+    box-sizing: border-box;
+    border: var(--cellBorderSize) solid #333;
+}
+
+.words-cell[data-state="none"] {
+    background-color: #333;
+}
+
+.words-cell[data-state="has"] {
+    background-color: #ba4;
+}
+
+.words-cell[data-state="correct"] {
+    background-color: #7b6;
+}
