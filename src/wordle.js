@@ -5,14 +5,83 @@ import words from '../data/words.json' assert { type: "json" };
 import { mulberry32 } from './util/mulberry32.js';
 
 
-const rand = 0;
+const GUESSTYPES = {
+
+    none: 1,
+    has: 2,
+    correct: 3,
+
+    types: {
+        1: 'none',
+        2: 'has',
+        3: 'correct'
+    }
+
+}
+
+
+class Guess {
+    word = '';
+    checks = [];
+
+    constructor(word='', guessWord='') {
+        this.word = word;
+        this.check(guessWord);
+    }
+
+    check(guessWord='') {
+        this.checks = [];
+
+
+        for(let i in this.word) {
+
+            if(!guessWord.includes(this.word[i])) {
+                this.checks[i] = GUESSTYPES.none;
+            } else if (this.word[i] == guessWord[i]) {
+                this.checks[i] = GUESSTYPES.correct;
+            } else {
+                this.checks[i] = GUESSTYPES.has;
+            }
+
+        }
+
+        
+        const forEachOfType = (type, func) => {
+            for(let i in this.word) {
+                if(this.checks[i] != type) continue;
+                func(i, this.word[i]);
+            }
+        }
+
+
+        let letterCounts = {};
+        forEachOfType(GUESSTYPES.correct, (i, l) => {
+            if(!letterCounts[l]) letterCounts[l] = 1;
+            else letterCounts[l]++;
+        });
+
+        forEachOfType(GUESSTYPES.has, (i, l) => {
+            if(!letterCounts[l]) letterCounts[l] = 1;
+            else letterCounts[l]++;
+            
+            const guessLetterCount = guessWord.split('').reduce((count, letter) => count + (letter == l), 0);
+
+            if(guessLetterCount >= letterCounts[l]) return;
+
+            this.checks[i] = GUESSTYPES.none;
+            letterCounts[l]--;
+        });
+
+
+    }
+}
 
 
 const wordle = new class {
     /** @type {String} */
     #word = null;
+    /** @type {Guess[]} */
     #guesses = [];
-    #numGuesses = 6;
     #currentGuess = '';
     #isComplete = false;
 
@@ -21,60 +90,15 @@ const wordle = new class {
         this.setNumGuesses(6);
         this.createHtml();
 
-
         document.addEventListener('keydown', (e) => {
-            if(this.#isComplete) return;
-
-            if(e.key == 'Backspace') {
-                this.#currentGuess = this.#currentGuess.slice(0, this.#currentGuess.length-1);
-                this.updateHtml();
-                return;
-            }
-            if(e.key == 'Enter') {
-                if(this.#currentGuess.length != this.#word.length || this.#currentGuess.includes('*')) {
-                    this.shakeAnim();
-                    return;
-                }
-                if(!words.allowed.includes(this.#currentGuess)) {
-                    this.shakeAnim();
-                    return;
-                }
-
-                for(let i=0; i < this.#numGuesses; i++) {
-                    if(this.#guesses[i] == null) {
-    
-                        this.#guesses[i] = this.#currentGuess;
-                        this.#currentGuess = '';
-
-                        if(this.#guesses[i] == this.#word) this.#isComplete = true;
-    
-                        break;
-                    }
-                }
-                
-                this.updateHtml();
-
-                return;
-            }
-
-            
-            if(this.#currentGuess.length >= this.#word.length) return;
-
-            const letters = 'abcdefghijklmnopqrstuvwxyz*';
-            const letter = e.key.toLocaleLowerCase();
-            if(letters.indexOf(letter) == -1) return;
-
-            this.#currentGuess += letter;
-
-            this.updateHtml();
-
+            this.input(e.key);
         });
 
     }
 
     setTodaysWord() {
         const day = Math.floor((Date.now() - new Date().getTimezoneOffset()*60*1000) / 1000 / 60 / 60 / 24);
-        const random = mulberry32(day + rand);
+        const random = mulberry32(day);
         const index = Math.floor(random.next(0, words.possible.length));
         
         this.#word = words.allowed[words.possible[index]];
@@ -82,31 +106,9 @@ const wordle = new class {
     }
 
     setNumGuesses(count=6) {
-        this.#numGuesses = count;
-        this.#guesses = new Array(this.#numGuesses).fill(null);
+        this.#guesses = new Array(count).fill(null);
         this.#currentGuess = '';
     }
-
-    // I think this is correct?
-    letter(word, pos) {
-        
-        const letter = word[pos];
-        if(!this.#word.includes(letter)) return 'none';
-
-        let lCount = 0;
-        for(let l of this.#word) {
-            if(l == letter) lCount++;
-        }
-
-        if(this.#word[pos] == letter) return 'correct';
-        if(lCount == 1) {
-            if(this.#word.includes(letter)) return 'has';
-            return 'none';
-        }    
-        return 'has';
-
-    }
-
 
 
 
@@ -120,7 +122,7 @@ const wordle = new class {
         }
 
 
-        for(let i=0; i < this.#numGuesses; i++) {
+        for(let i=0; i < this.#guesses.length; i++) {
             const row = document.createElement('div');
             row.classList.add('words-row');
 
@@ -142,7 +144,7 @@ const wordle = new class {
 
     async updateHtml() {
 
-        for(let i=0; i < this.#numGuesses; i++) {
+        for(let i=0; i < this.#guesses.length; i++) {
             if(this.#guesses[i] == null) continue;
 
             for(let j=0; j < this.#word.length; j++) {
@@ -151,24 +153,25 @@ const wordle = new class {
 
                 this.flipAnim(cell, j*150).then(() => {
                     
-                    cell.innerText = this.#guesses[i][j];
+                    cell.innerText = this.#guesses[i].word[j];
 
-                    cell.setAttribute('data-state', this.letter(this.#guesses[i], j));
+                    cell.setAttribute('data-state', GUESSTYPES.types[this.#guesses[i].checks[j]]);
                     
                 }).catch(() => {});
 
             }
         }
 
-        for(let i=0; i < this.#numGuesses; i++) {
-            if(this.#guesses[i] == null) {
-                for(let j=0; j < this.#word.length; j++) {
-                    const cell = this.#grid.childNodes[i].childNodes[j];
+        for(let i=0; i < this.#guesses.length; i++) {
+            if(this.#guesses[i] != null) continue;
 
-                    cell.innerText = this.#currentGuess[j] || '';
-                }
-                break;
+            for(let j=0; j < this.#word.length; j++) {
+                const cell = this.#grid.childNodes[i].childNodes[j];
+
+                cell.innerText = this.#currentGuess[j] || '';
             }
+            break;
+
         }
 
     }
@@ -214,6 +217,64 @@ const wordle = new class {
             iterations: 3
         });
     }
+
+
+
+
+    input(key) {
+        if(this.#isComplete) return;
+
+        if(key == 'Backspace') {
+            this.#currentGuess = this.#currentGuess.slice(0, this.#currentGuess.length-1);
+            this.updateHtml();
+            return;
+        }
+        if(key == 'Enter') {
+
+            if(this.guessWord(this.#currentGuess)) {
+                this.#currentGuess = '';
+            }
+            this.updateHtml();
+
+            return;
+        }
+
+        
+        if(this.#currentGuess.length >= this.#word.length) return;
+
+        const letters = 'abcdefghijklmnopqrstuvwxyz*';
+        const letter = key.toLocaleLowerCase();
+        if(letters.indexOf(letter) == -1) return;
+
+        this.#currentGuess += letter;
+
+        this.updateHtml();
+
+    }
+
+    /**
+     * Guess a word.
+     * @param {String} guess 
+     * @returns {Boolean} If word guess was added
+     */
+    guessWord(guess) {
+        if(guess.length != this.#word.length || guess.includes('*') || !words.allowed.includes(guess)) {
+            this.shakeAnim();
+            return false;
+        }
+
+        for(let i in this.#guesses) {
+            if(this.#guesses[i] != null) continue;
+
+            this.#guesses[i] = new Guess(guess, this.#word);
+            if(this.#guesses[i].word == this.#word) this.#isComplete = true;
+
+            break;
+        }
+
+        return true;
+    }
+
 
 }
 
