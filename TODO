@@ -1,14 +1,16 @@
 
 TODO:
 
-    Refactor ALL of wordle.js (It's all very badly coded)
-	
-	Add win screen
-	Add lose screen
+    Refactor wordle.js (It's all very badly coded)
+
+    Add win screen
+    Add lose screen
 
     Add (better) light mode
 
     Add help menu
 
     Add settings menu
+
+    Make CSS cleaner
 

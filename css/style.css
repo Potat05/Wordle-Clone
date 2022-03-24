@@ -4,6 +4,8 @@
 :root {
     --cellSize: 60px;
     --cellBorderSize: 2px;
+
+    --keySize: 50px;
 }
 
 :root[theme="light"] {
@@ -22,6 +24,10 @@
 
 
 
+
+* {
+    font-family: Arial, Helvetica, sans-serif;
+}
 
 
 
@@ -105,6 +111,55 @@ header svg {
 }
 
 
+#messages {
+    position: fixed;
+
+    display: flex;
+    flex-direction: column;
+
+    pointer-events: none;
+
+    padding: 10px;
+    width: 100%;
+    z-index: 9999;
+}
+
+.message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    background-color: whitesmoke;
+    border-radius: 5px;
+    
+    font-weight: 700;
+
+    text-align: center;
+    
+    padding: 5px;
+    margin: 5px;
+    width: 250px;
+    min-height: 50px;
+
+    color: black;
+    
+    transition: 0.2s;
+}
+
+.message.info {
+    color: blue;
+}
+
+.message.warning {
+    color: yellow;
+}
+
+.message.error {
+    color: red;
+}
+
+
+
 #words-grid {
 
 }
@@ -132,19 +187,59 @@ header svg {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-.words-cell:not([data-state]) {
+.state:not([data-state]) {
     box-sizing: border-box;
     border: var(--cellBorderSize) solid #333;
 }
 
-.words-cell[data-state="none"] {
+.state[data-state="none"] {
     background-color: #333;
 }
 
-.words-cell[data-state="has"] {
+.state[data-state="has"] {
     background-color: #ba4;
 }
 
-.words-cell[data-state="correct"] {
+.state[data-state="correct"] {
     background-color: #7b6;
+}
+
+
+
+
+
+
+#keyboard {
+    
+}
+
+.keyboard-row {
+    display: flex;
+    justify-content: center;
+}
+
+.keyboard-button {
+    width: var(--keySize);
+    height: var(--keySize);
+    border-radius: 5px;
+    border: none;
+    margin: 3px;
+
+    background-color: rgba(0, 0, 0, 0.5);
+
+    cursor: pointer;
+    text-transform: uppercase;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    color: white;
+    font-size: calc(var(--keySize) - 5px);
+    font-weight: bolder;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.keyboard-button.oneandhalf {
+    width: calc(var(--keySize) * 1.5);
 }
