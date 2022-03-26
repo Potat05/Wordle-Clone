@@ -33,7 +33,7 @@ const wordle = new class {
         this.setTodaysWord();
         this.setNumGuesses(this.#guesses.length);
 
-        this.updateHtml();
+        this.createHtml();
     }
 
     setTodaysWord() {
