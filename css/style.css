@@ -8,11 +8,21 @@
     --keySize: 50px;
 }
 
+@media screen and (max-width: 600px) {
+    :root {
+        --cellSize: 55px;
+
+        --keySize: 30px;
+    }
+}
+
+
 :root[theme="light"] {
     --bodyColor: white;
     
     --headerBackground: #eee;
     --headerBorder: 1px solid #bbb;
+    --headerColor: black;
 }
 
 :root[theme="dark"] {
@@ -20,6 +30,7 @@
     
     --headerBackground: #111;
     --headerBorder: 1px solid #333;
+    --headerColor: white;
 }
 
 
@@ -27,6 +38,7 @@
 
 * {
     font-family: Arial, Helvetica, sans-serif;
+    transition: background-color 0.2s, color 0.1s;
 }
 
 
@@ -38,17 +50,11 @@
 }
 
 
-.title {
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    cursor: default;
-    font-weight: 600;
-}
 
-
-.hoverSwap {
+.hoverSwap, .clickToggle {
     display: grid;
 }
-.hoverSwap > * {
+.hoverSwap > *, .clickToggle > * {
     grid-column: 1;
     grid-row: 1;
     transition: opacity 0.2s;
@@ -63,12 +69,15 @@
     opacity: 0;
 }
 
+:root[theme="light"] .dark, :root[theme="dark"] .light {
+    opacity: 0;
+    pointer-events: none;
+}
+
 
 .clickable {
     cursor: pointer;
 }
-
-
 
 
 
@@ -79,24 +88,51 @@ body {
 }
 
 
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 
+
+header {
     height: 50px;
-    font-size: 50px;
 
     padding: 0 10px;
     margin: 0;
 
+    text-align: center;
+
     background: var(--headerBackground);
-    color: white;
-    border: var(--headerBorder);
+    color: var(--headerColor);
+    border-bottom: var(--headerBorder);
+
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    cursor: default;
+    font-weight: 600;
+    font-size: 45px;
+}
+
+header * {
+    height: 100%;
 }
 
 header svg {
     height: 60%;
+}
+
+.left {
+    float: left;
+}
+.right {
+    float: right;
+}
+.left, .right {
+    display: flex;
+}
+.right > *, .left > * {
+    width: 30px;
+}
+.left > *:not(:first-child) {
+    margin-left: 10px;
+}
+.right > *:not(:last-child) {
+    margin-right: 10px;
 }
 
 
@@ -238,8 +274,51 @@ header svg {
     font-size: calc(var(--keySize) - 5px);
     font-weight: bolder;
     font-family: Arial, Helvetica, sans-serif;
+
+    transition: background-color 0.5s;
 }
 
 .keyboard-button.oneandhalf {
     width: calc(var(--keySize) * 1.5);
+}
+
+#game[data-state="complete"] .keyboard-button {
+    cursor: not-allowed;
+}
+
+
+
+
+
+
+
+
+.menu.hidden {
+    display: none;
+}
+
+
+
+.setting {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: 100%;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.setting label {
+    padding-bottom: 10px;
+}
+
+.settingData {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+
+.setting input {
+
 }

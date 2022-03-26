@@ -1,96 +1,11 @@
 
 
 import words from '../data/words.json' assert { type: "json" };
+import { GUESSTYPES, Guess } from './guess.js';
 import message from './message.js';
 
 import { mulberry32 } from './util/mulberry32.js';
 
-
-const rand = Math.floor(mulberry32(0).next(0, 1e+10));
-
-
-const GUESSTYPES = {
-
-    notset: 0,
-    none: 1,
-    has: 2,
-    correct: 3,
-
-    types: {
-        0: 'notset',
-        1: 'none',
-        2: 'has',
-        3: 'correct'
-    }
-
-}
-
-
-class Guess {
-    word = '';
-    checks = [];
-
-    constructor(word='', guessWord='') {
-        this.word = word;
-        this.check(guessWord);
-    }
-
-    check(guessWord='') {
-        this.checks = [];
-
-
-        for(let i in this.word) {
-
-            if(!guessWord.includes(this.word[i])) {
-                this.checks[i] = GUESSTYPES.none;
-            } else if (this.word[i] == guessWord[i]) {
-                this.checks[i] = GUESSTYPES.correct;
-            } else {
-                this.checks[i] = GUESSTYPES.has;
-            }
-
-        }
-
-        
-        const forEachOfType = (type, func) => {
-            for(let i in this.word) {
-                if(this.checks[i] != type) continue;
-                func(i, this.word[i]);
-            }
-        }
-
-
-        let letterCounts = {};
-        forEachOfType(GUESSTYPES.correct, (i, l) => {
-            if(!letterCounts[l]) letterCounts[l] = 1;
-            else letterCounts[l]++;
-        });
-
-        forEachOfType(GUESSTYPES.has, (i, l) => {
-            if(!letterCounts[l]) letterCounts[l] = 1;
-            else letterCounts[l]++;
-            
-            const guessLetterCount = guessWord.split('').reduce((count, letter) => count + (letter == l), 0);
-
-            if(guessLetterCount >= letterCounts[l]) return;
-
-            this.checks[i] = GUESSTYPES.none;
-            letterCounts[l]--;
-        });
-
-
-    }
-
-    highest(letter) {
-        let highest = GUESSTYPES.notset;
-        for(let i in this.word) {
-            if(this.word[i] != letter) continue;
-            if(this.checks[i] > highest) highest = this.checks[i];
-        }
-        return highest;
-    }
-
-}
 
 
 const wordle = new class {
@@ -100,6 +15,8 @@ const wordle = new class {
     #guesses = [];
     #currentGuess = '';
     #isComplete = false;
+
+    seed = 0;
 
     constructor() {
         this.setTodaysWord();
@@ -112,13 +29,22 @@ const wordle = new class {
 
     }
 
+    reset() {
+        this.setTodaysWord();
+        this.setNumGuesses(this.#guesses.length);
+
+        this.updateHtml();
+    }
+
     setTodaysWord() {
         const day = Math.floor((Date.now() - new Date().getTimezoneOffset()*60*1000) / 1000 / 60 / 60 / 24);
-        const random = mulberry32(day + rand);
+        const random = mulberry32(day + Math.floor(mulberry32(this.seed).next(0, 1e+10)));
         const index = Math.floor(random.next(0, words.possible.length));
         
         this.#word = words.allowed[words.possible[index]];
         this.#isComplete = false;
+
+        this.#game.setAttribute('data-state', 'playing');
     }
 
     setNumGuesses(count=6) {
@@ -127,10 +53,9 @@ const wordle = new class {
     }
 
 
-
+    #game = document.querySelector('#game');
     #grid = document.querySelector('#words-grid');
     #keyboard = document.querySelector('#keyboard');
-    #message = document.querySelector('#message');
 
     async createHtml() {
 
@@ -197,32 +122,27 @@ const wordle = new class {
         const ENTER = document.createElement('div');
         ENTER.classList.add('keyboard-button');
         ENTER.classList.add('oneandhalf');
-        ENTER.onclick = () => {
-            this.input('Enter');
-        }
+        ENTER.onclick = () => this.input('Enter');
         ENTER.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-return-left" viewBox="0 0 16 16">
                 <path fill-rule="evenodd" d="M14.5 1.5a.5.5 0 0 1 .5.5v4.8a2.5 2.5 0 0 1-2.5 2.5H2.707l3.347 3.346a.5.5 0 0 1-.708.708l-4.2-4.2a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 8.3H12.5A1.5 1.5 0 0 0 14 6.8V2a.5.5 0 0 1 .5-.5z"/>
             </svg>
         `;
-        this.#keyboard.childNodes[2].prepend(ENTER);
-
+        
         const BACKSPACE = document.createElement('div');
         BACKSPACE.classList.add('keyboard-button');
         BACKSPACE.classList.add('oneandhalf');
-        BACKSPACE.onclick = () => {
-            this.input('Backspace');
-        }
+        BACKSPACE.onclick = () => this.input('Backspace');
         BACKSPACE.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-backspace" viewBox="0 0 16 16">
                 <path d="M5.83 5.146a.5.5 0 0 0 0 .708L7.975 8l-2.147 2.146a.5.5 0 0 0 .707.708l2.147-2.147 2.146 2.147a.5.5 0 0 0 .707-.708L9.39 8l2.146-2.146a.5.5 0 0 0-.707-.708L8.683 7.293 6.536 5.146a.5.5 0 0 0-.707 0z"/>
                 <path d="M13.683 1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-7.08a2 2 0 0 1-1.519-.698L.241 8.65a1 1 0 0 1 0-1.302L5.084 1.7A2 2 0 0 1 6.603 1h7.08zm-7.08 1a1 1 0 0 0-.76.35L1 8l4.844 5.65a1 1 0 0 0 .759.35h7.08a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1h-7.08z"/>
             </svg>
         `;
+        
+        
+        this.#keyboard.childNodes[2].prepend(ENTER);
         this.#keyboard.childNodes[2].appendChild(BACKSPACE);
-
-
-
 
 
 
@@ -335,6 +255,7 @@ const wordle = new class {
 
     input(key) {
 
+        if(MENUS.currentMenu != 'game') return;
         if(this.#isComplete) return;
 
         if(key == 'Backspace') {
@@ -386,7 +307,10 @@ const wordle = new class {
             if(this.#guesses[i] != null) continue;
 
             this.#guesses[i] = new Guess(guess, this.#word);
-            if(this.#guesses[i].word == this.#word) this.#isComplete = true;
+            if(this.#guesses[i].word == this.#word) {
+                this.#game.setAttribute('data-state', 'complete');
+                this.#isComplete = true;
+            }
 
             break;
         }
@@ -398,5 +322,5 @@ const wordle = new class {
 }
 
 
+export { wordle };
 
-console.log(wordle);
