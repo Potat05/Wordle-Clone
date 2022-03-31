@@ -64,10 +64,20 @@ const wordle = new class {
         this.#currentGuess = '';
     }
 
+    guessIndex() {
+        for(let i in this.#guesses) {
+            if(this.#guesses[i] == null) return i;
+        }
+        return -1;
+    }
+
 
     #game = document.querySelector('#game');
     #grid = document.querySelector('#words-grid');
     #keyboard = document.querySelector('#keyboard');
+
+    #guessDiv = null;
+    #inputDiv = null;
 
     async createHtml() {
 
@@ -206,17 +216,32 @@ const wordle = new class {
 
     setGuessHtml() {
 
-        for(let i=0; i < this.#guesses.length; i++) {
-            if(this.#guesses[i] != null) continue;
+        const currentGuess = this.guessIndex();
+        const currentIndex = this.#currentGuess.length;
 
-            for(let j=0; j < this.#word.length; j++) {
-                const cell = this.#grid.childNodes[i].childNodes[j];
+        if(currentGuess == -1) return;
 
-                cell.innerText = this.#currentGuess[j] || '';
-            }
-            break;
+        for(let j=0; j < this.#word.length; j++) {
+            const cell = this.#grid.childNodes[currentGuess].childNodes[j];
 
+            cell.innerText = this.#currentGuess[j] || '';
         }
+
+
+        if(this.#guessDiv) this.#guessDiv.classList.remove('input');
+
+        this.#guessDiv = this.#grid.childNodes[currentGuess];
+
+        if(this.#guessDiv && !this.#isComplete) this.#guessDiv.classList.add('input');
+
+
+
+        if(this.#inputDiv) this.#inputDiv.classList.remove('input');
+
+        this.#inputDiv = this.#grid.childNodes[currentGuess].childNodes[currentIndex];
+
+        if(this.#inputDiv && !this.#isComplete) this.#inputDiv.classList.add('input');
+
 
     }
 
@@ -253,7 +278,8 @@ const wordle = new class {
     }
 
     shakeAnim() {
-        this.#grid.animate([
+        if(!this.#guessDiv) return;
+        this.#guessDiv.animate([
             { transform: 'translate(-10px, 0)', backgroundColor: 'rgba(255, 0, 0, 0.05)' },
             { transform: 'translate(10px, 0)', backgroundColor: 'rgba(255, 0, 0, 0.05)' }
         ], {
@@ -261,8 +287,6 @@ const wordle = new class {
             iterations: 3
         });
     }
-
-
 
 
     input(key) {
@@ -298,12 +322,17 @@ const wordle = new class {
 
     }
 
+
     /**
      * Guess a word.
      * @param {String} guess 
      * @returns {Boolean} If word guess was added
      */
     guessWord(guess) {
+
+        guess = guess.toLowerCase();
+
+        const currentGuess = this.guessIndex();
 
         const err = (text) => {
             this.shakeAnim();
@@ -314,18 +343,19 @@ const wordle = new class {
         if(guess.length != this.#word.length) return err('Word is not long enough!');
         if(this.#guesses.some((g) => g?.word == guess)) return err('You already guessed that word!');
         if(!words.allowed.includes(guess)) return err('That is not a valid word!');
-
-        for(let i in this.#guesses) {
-            if(this.#guesses[i] != null) continue;
-            this.#guesses[i] = new Guess(guess, this.#word);
-            break;
+        // If on last word, Don't allow the extended word list
+        if(currentGuess == this.#guesses.length-1 ) {
+            if(words.possible.every(i => words.allowed[i] != guess)) {
+                return err('The last guess can only be a valid POSSIBLE word.');
+            }
         }
+
+        this.#guesses[currentGuess] = new Guess(guess, this.#word);
 
         this.checkComplete();
 
         return true;
     }
-
 
     checkComplete() {
         if(this.#isComplete) return;
@@ -335,12 +365,12 @@ const wordle = new class {
             if(this.#guesses[i].word == this.#word || i == this.#guesses.length-1) {
                 this.#game.setAttribute('data-state', 'complete');
                 this.#isComplete = true;
+                this.setGuessHtml();
                 this.onComplete();
             }
 
         }
     }
-
 
     getCompletion() {
         this.checkComplete();
@@ -377,7 +407,6 @@ const wordle = new class {
         }
 
     }
-
 
 }
 

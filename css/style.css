@@ -205,6 +205,10 @@ header svg {
     display: flex;
 }
 
+.words-row.input {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
 .words-cell {
     margin: 2px;
     width: var(--cellSize);
@@ -227,6 +231,18 @@ header svg {
 .state:not([data-state]) {
     box-sizing: border-box;
     border: var(--cellBorderSize) solid #333;
+}
+
+.words-cell.input {
+    box-sizing: border-box;
+    border: var(--cellBorderSize) dashed #333;
+    background-color: rgba(255, 255, 255, 0.05);
+    animation: inputBlink 1s alternate infinite;
+}
+
+@keyframes inputBlink {
+    from { border-color: #333; }
+    to { border-color: #555; }
 }
 
 .state[data-state="none"] {
