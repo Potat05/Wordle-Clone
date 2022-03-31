@@ -2,20 +2,37 @@
 
 
 const MENUS = new class {
-    #menus = document.querySelectorAll('*[data-menu]');
+    #menuContainer = document.querySelector('#menus');
 
-    currentMenu = '';
-    
-    setMenu(data_menu) {
-        this.currentMenu = data_menu;
-        this.#menus.forEach(menu => {
-            if(menu.getAttribute('data-menu') == data_menu) {
-                menu.classList.remove('hidden');
-            } else {
-                menu.classList.add('hidden');
-            }
-        });
+    #menu = '';
+
+    set menu(new_menu) {
+        this.#menu = new_menu;
+
+        const newMenu = this.#menuContainer.querySelector(`*[data-menu="${this.#menu}"]`);
+        const menuType = newMenu.getAttribute('data-menu-type');
+        
+        switch(menuType) {
+            case 'above': {
+                newMenu.classList.remove('hidden');
+                break; }
+            default: {
+
+                this.#menuContainer.querySelectorAll('*[data-menu]').forEach(menu => {
+                    if(menu == newMenu) return;
+                    menu.classList.add('hidden');
+                });
+
+                newMenu.classList.remove('hidden');
+
+                break; }
+        }
+
+    }
+
+    get menu() {
+        return this.#menu;
     }
 }
 
-MENUS.setMenu('game');
+MENUS.menu = 'game';

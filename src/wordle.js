@@ -8,6 +8,17 @@ import { mulberry32 } from './util/mulberry32.js';
 
 
 
+const dayF = (Date.now() - new Date().getTimezoneOffset()*60*1000) / 1000 / 60 / 60 / 24
+const day = Math.floor(dayF);
+const todaysSeed = Math.floor(mulberry32(day).next(0, 1e+10));
+
+const timeTillNextDay = (Math.ceil(dayF) - dayF) * 24 * 60 * 60 * 1000;
+setTimeout(() => {
+    message.send('A new word of the day has become available!\nRefresh to play it!', 'warning', 1e+10);
+}, timeTillNextDay);
+
+
+
 const wordle = new class {
     /** @type {String} */
     #word = null;
@@ -16,7 +27,9 @@ const wordle = new class {
     #currentGuess = '';
     #isComplete = false;
 
-    seed = 0;
+    seed = null;
+
+    onComplete = () => {};
 
     constructor() {
         this.setTodaysWord();
@@ -37,8 +50,7 @@ const wordle = new class {
     }
 
     setTodaysWord() {
-        const day = Math.floor((Date.now() - new Date().getTimezoneOffset()*60*1000) / 1000 / 60 / 60 / 24);
-        const random = mulberry32(day + Math.floor(mulberry32(this.seed).next(0, 1e+10)));
+        const random = (this.seed != null ? mulberry32(this.seed) : mulberry32(todaysSeed));
         const index = Math.floor(random.next(0, words.possible.length));
         
         this.#word = words.allowed[words.possible[index]];
@@ -255,7 +267,7 @@ const wordle = new class {
 
     input(key) {
 
-        if(MENUS.currentMenu != 'game') return;
+        if(MENUS.menu != 'game') return;
         if(this.#isComplete) return;
 
         if(key == 'Backspace') {
@@ -305,17 +317,65 @@ const wordle = new class {
 
         for(let i in this.#guesses) {
             if(this.#guesses[i] != null) continue;
-
             this.#guesses[i] = new Guess(guess, this.#word);
-            if(this.#guesses[i].word == this.#word) {
-                this.#game.setAttribute('data-state', 'complete');
-                this.#isComplete = true;
-            }
-
             break;
         }
 
+        this.checkComplete();
+
         return true;
+    }
+
+
+    checkComplete() {
+        if(this.#isComplete) return;
+        for(let i in this.#guesses) {
+            if(this.#guesses[i] == null) continue;
+
+            if(this.#guesses[i].word == this.#word || i == this.#guesses.length-1) {
+                this.#game.setAttribute('data-state', 'complete');
+                this.#isComplete = true;
+                this.onComplete();
+            }
+
+        }
+    }
+
+
+    getCompletion() {
+        this.checkComplete();
+        if(!this.#isComplete) return { isComplete: false };
+
+        let outcome = (this.#guesses.some(guess => guess.isWin()) ? 'win' : 'lose');
+
+        let text = 'Wordle Clone - ';
+
+        if(this.seed == null) {
+            text += 'day: ' + day;
+        } else {
+            text += 'seed: ' + this.seed;
+        }
+
+        let i = 0;
+        do {
+            i++;
+            if(this.#guesses[i] == null) break;
+        } while(i < this.#guesses.length);
+        text += '\n\n' + i + '/' + this.#guesses.length;
+        if(outcome == 'lose') text += ' LOST';
+
+        for(let i in this.#guesses) {
+            if(this.#guesses[i] == null) break;
+
+            text += `\n${this.#guesses[i].text()}`;
+        }
+
+        return {
+            isComplete: true,
+            outcome,
+            text
+        }
+
     }
 
 

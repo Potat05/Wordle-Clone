@@ -1,5 +1,5 @@
 
-const GUESSTYPES = {
+const GUESSTYPES =  {
 
     notset: 0,
     none: 1,
@@ -11,6 +11,13 @@ const GUESSTYPES = {
         1: 'none',
         2: 'has',
         3: 'correct'
+    },
+
+    emojis: {
+        0: ' ',
+        1: '⬛',
+        2: '🟨',
+        3: '🟩'
     }
 
 }
@@ -78,6 +85,14 @@ class Guess {
             if(this.checks[i] > highest) highest = this.checks[i];
         }
         return highest;
+    }
+
+    isWin() {
+        return this.checks.every(check => check == GUESSTYPES.correct);
+    }
+
+    text() {
+        return this.checks.map(check => GUESSTYPES.emojis[check]).join('');
     }
 
 }

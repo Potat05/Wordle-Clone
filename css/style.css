@@ -57,7 +57,7 @@
 .hoverSwap > *, .clickToggle > * {
     grid-column: 1;
     grid-row: 1;
-    transition: opacity 0.2s;
+    transition: opacity ease 0.2s;
 }
 .hoverSwap > *:last-child {
     opacity: 0;
@@ -187,6 +187,7 @@ header svg {
 }
 
 .message.warning {
+    background-color: #333;
     color: yellow;
 }
 
@@ -321,4 +322,43 @@ header svg {
 
 .setting input {
 
+}
+
+
+
+
+
+
+.above {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+
+
+.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 100%;
+}
+
+#gameComplete {
+    background-color: #555;
+    color: white;
+
+    padding: 10px;
+    border-radius: 5px;
+
+    text-align: center;
+}
+
+#gameCompleteText {
+    margin-bottom: 20px;
 }
